@@ -6,4 +6,6 @@ data:
   SPRING_DATASOURCE_URL: jdbc:postgresql://mini-bank-postgres:5432/minibank
   SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
   SPRING_DATASOURCE_USERNAME: postgres
+  HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+  SPRING_H2_CONSOLE_ENABLED: "false"
   JWT_EXPIRATION_MS: "3600000"

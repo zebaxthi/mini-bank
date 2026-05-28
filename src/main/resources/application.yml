@@ -2,10 +2,12 @@ spring:
   application:
     name: mini-bank
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/minibank}
-    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.postgresql.Driver}
-    username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:0000}
+    # Default: in-memory H2 so `docker run` works without external DB.
+    # Override via env vars for Postgres (docker-compose / k8s).
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:minibank;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.h2.Driver}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
   jpa:
     hibernate:
       ddl-auto: create-drop
@@ -13,18 +15,22 @@ spring:
     properties:
       hibernate:
         "format_sql": true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        dialect: ${HIBERNATE_DIALECT:org.hibernate.dialect.H2Dialect}
   h2:
     console:
-      enabled: false
+      enabled: ${SPRING_H2_CONSOLE_ENABLED:true}
 server:
   port: 8080
 jwt:
-  secret: secret-key-1234567890
-  expiration-ms: 3600000
+  secret: ${JWT_SECRET:7f4c9d8a1b2e3f4051627384950abcdef1234567890fedcba9876543210abcd}
+  expiration-ms: ${JWT_EXPIRATION_MS:3600000}
 api:
-  key: secret-api-key
+  key: ${API_KEY:6IHTP4e5GwaPnuRaEu6mKHCZaZi46cvJ}
 logging:
   level:
     "org.springframework": INFO
     "com.example": DEBUG
+
+springdoc:
+  swagger-ui:
+    persist-authorization: true

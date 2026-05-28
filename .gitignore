@@ -1,0 +1,30 @@
+# Maven / Java
+target/
+*.class
+*.log
+hs_err_pid*
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.vscode/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# Env / secrets (do not commit)
+.env
+.env.*
+*.env
+*.pem
+*.key
+*.p12
+*.jks
+

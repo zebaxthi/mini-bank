@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: mini-bank
-          image: mini-bank:latest
+          image: mini-bank-app:latest
           ports:
             - containerPort: 8080
           env:
@@ -38,6 +38,16 @@ spec:
                 secretKeyRef:
                   name: mini-bank-secrets
                   key: SPRING_DATASOURCE_PASSWORD
+            - name: HIBERNATE_DIALECT
+              valueFrom:
+                configMapKeyRef:
+                  name: mini-bank-config
+                  key: HIBERNATE_DIALECT
+            - name: SPRING_H2_CONSOLE_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: mini-bank-config
+                  key: SPRING_H2_CONSOLE_ENABLED
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:
