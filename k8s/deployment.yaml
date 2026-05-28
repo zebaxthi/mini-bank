@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mini-bank
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mini-bank
+  template:
+    metadata:
+      labels:
+        app: mini-bank
+    spec:
+      containers:
+        - name: mini-bank
+          image: mini-bank:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_DATASOURCE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: mini-bank-config
+                  key: SPRING_DATASOURCE_URL
+            - name: SPRING_DATASOURCE_DRIVER
+              valueFrom:
+                configMapKeyRef:
+                  name: mini-bank-config
+                  key: SPRING_DATASOURCE_DRIVER
+            - name: SPRING_DATASOURCE_USERNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: mini-bank-config
+                  key: SPRING_DATASOURCE_USERNAME
+            - name: SPRING_DATASOURCE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mini-bank-secrets
+                  key: SPRING_DATASOURCE_PASSWORD
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: mini-bank-secrets
+                  key: JWT_SECRET
+            - name: JWT_EXPIRATION_MS
+              valueFrom:
+                configMapKeyRef:
+                  name: mini-bank-config
+                  key: JWT_EXPIRATION_MS
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mini-bank-secrets
+                  key: API_KEY

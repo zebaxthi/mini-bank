@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mini-bank-config
+data:
+  SPRING_DATASOURCE_URL: jdbc:postgresql://mini-bank-postgres:5432/minibank
+  SPRING_DATASOURCE_DRIVER: org.postgresql.Driver
+  SPRING_DATASOURCE_USERNAME: postgres
+  JWT_EXPIRATION_MS: "3600000"
