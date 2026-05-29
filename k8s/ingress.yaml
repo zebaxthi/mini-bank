@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mini-bank-ingress
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: mini-bank.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mini-bank
+                port:
+                  number: 8080

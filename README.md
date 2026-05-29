@@ -8,25 +8,28 @@ Proyecto Spring Boot de ejemplo para un backend bancario pequeño.
 - CAP: consistencia fuerte en transacciones y reporting eventual con eventos asíncronos
 - Contenedores y despliegue en Kubernetes
 
-## Ejecutar localmente
-1. `mvn clean package`
-2. `java -jar target/mini-bank-0.0.1-SNAPSHOT.jar`
-3. Accede a:
-   - `http://localhost:8080/api/auth/login`
-   - `http://localhost:8080/api/accounts`
-   - `http://localhost:8080/api/transactions/transfer`
-   - `http://localhost:8080/api/admin/reports` (requiere API key)
-
-## Docker
-### Docker (solo)
-1. `docker build -t mini-bank:latest .`
-2. `docker run --rm -p 8080:8080 --name mini-bank mini-bank:latest`
-
-> Por defecto corre con H2 en memoria dentro del contenedor. Para Postgres usa Docker Compose o Kubernetes.
-
-### Docker Compose (con Postgres)
+## Docker Compose
 1. `docker compose up --build`
 2. Swagger UI: `http://localhost:8080/swagger-ui/index.html`
+
+> Esta opción usa PostgreSQL. El servicio monta `docker/postgres-init.sql` para crear el esquema y datos de ejemplo en la base de datos al iniciar.
+
+## Kubernetes
+1. Construye la imagen: `docker build -t mini-bank-app:latest .`
+2. Aplica los manifiestos:
+   - `kubectl apply -f k8s/postgres-init-configmap.yaml`
+   - `kubectl apply -f k8s/postgres-statefulset.yaml`
+   - `kubectl apply -f k8s/postgres-service.yaml`
+   - `kubectl apply -f k8s/configmap.yaml`
+   - `kubectl apply -f k8s/secret.yaml`
+   - `kubectl apply -f k8s/deployment.yaml`
+   - `kubectl apply -f k8s/service.yaml`
+   - `kubectl apply -f k8s/ingress.yaml`
+
+3. Añade esta línea a tu archivo hosts local si quieres usar Ingress con host name:
+   - `127.0.0.1 mini-bank.local`
+4. Accede desde el navegador a:
+   - `http://mini-bank.local`
 
 ## Credenciales iniciales
 - Usuario: `alice@example.com` / `password123`
@@ -55,15 +58,23 @@ Proyecto Spring Boot de ejemplo para un backend bancario pequeño.
    - `GET /api/admin/reports` (requiere API key)
 
 ## Kubernetes
-1. Construye la imagen: `docker build -t mini-bank:latest .`
+1. Construye la imagen: `docker build -t mini-bank-app:latest .`
 2. Aplica los manifiestos:
-   - `kubectl apply -f k8s/postgres-deployment.yaml`
+   - `kubectl apply -f k8s/postgres-init-configmap.yaml`
+   - `kubectl apply -f k8s/postgres-statefulset.yaml`
    - `kubectl apply -f k8s/postgres-service.yaml`
    - `kubectl apply -f k8s/configmap.yaml`
    - `kubectl apply -f k8s/secret.yaml`
    - `kubectl apply -f k8s/deployment.yaml`
    - `kubectl apply -f k8s/service.yaml`
+   - `kubectl apply -f k8s/ingress.yaml`
+
+3. Añade esta línea a tu archivo hosts local si quieres usar Ingress con host name:
+   - `127.0.0.1 mini-bank.local`
+4. Accede desde el navegador a:
+   - `http://mini-bank.local`
 
 ## Notas
-- La app usa H2 en memoria por defecto cuando no hay variables de entorno de base de datos.
+- La app usa PostgreSQL en Docker Compose y Kubernetes.
 - En Kubernetes la app se conecta a PostgreSQL mediante `SPRING_DATASOURCE_URL`.
+- El modo de `docker run` directo ya no está documentado aquí; para uso local rápido, usa `docker compose up --build`.

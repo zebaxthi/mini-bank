@@ -1,8 +1,9 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: mini-bank-postgres
 spec:
+  serviceName: mini-bank-postgres
   replicas: 1
   selector:
     matchLabels:
@@ -27,6 +28,21 @@ spec:
           volumeMounts:
             - name: postgres-data
               mountPath: /var/lib/postgresql/data
+            - name: postgres-init
+              mountPath: /docker-entrypoint-initdb.d
       volumes:
-        - name: postgres-data
-          emptyDir: {}
+        - name: postgres-init
+          configMap:
+            name: mini-bank-postgres-init
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  podManagementPolicy: Parallel
+  updateStrategy:
+    type: RollingUpdate

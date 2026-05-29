@@ -13,6 +13,8 @@ services:
       interval: 5s
       timeout: 3s
       retries: 20
+    volumes:
+      - ./docker/postgres-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
 
   app:
     build: .
@@ -28,7 +30,7 @@ services:
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
       HIBERNATE_DIALECT: org.hibernate.dialect.PostgreSQLDialect
-      SPRING_H2_CONSOLE_ENABLED: "false"
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
       JWT_SECRET: 7f4c9d8a1b2e3f4051627384950abcdef1234567890fedcba9876543210abcd
       JWT_EXPIRATION_MS: "3600000"
       API_KEY: 6IHTP4e5GwaPnuRaEu6mKHCZaZi46cvJ
