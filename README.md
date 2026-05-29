@@ -16,15 +16,30 @@ Proyecto Spring Boot de ejemplo para un backend bancario pequeño.
 
 ## Kubernetes
 1. Construye la imagen: `docker build -t mini-bank-app:latest .`
-2. Aplica los manifiestos:
+
+2. Orden recomendado para crear (apply) — asegura que el PV existe antes del PVC:
+   - `kubectl apply -f k8s/pv-postgres.yaml`
    - `kubectl apply -f k8s/postgres-init-configmap.yaml`
-   - `kubectl apply -f k8s/postgres-statefulset.yaml`
-   - `kubectl apply -f k8s/postgres-service.yaml`
-   - `kubectl apply -f k8s/configmap.yaml`
    - `kubectl apply -f k8s/secret.yaml`
-   - `kubectl apply -f k8s/deployment.yaml`
+   - `kubectl apply -f k8s/postgres-service.yaml`
+   - `kubectl apply -f k8s/postgres-statefulset.yaml`
+   - `kubectl apply -f k8s/configmap.yaml`
    - `kubectl apply -f k8s/service.yaml`
-   - `kubectl apply -f k8s/ingress.yaml`
+   - `kubectl apply -f k8s/deployment.yaml`
+   - `kubectl apply -f k8s/ingress.yaml` (opcional)
+
+Comandos de ejemplo (apply):
+```bash
+kubectl apply -f k8s/pv-postgres.yaml
+kubectl apply -f k8s/postgres-init-configmap.yaml
+kubectl apply -f k8s/secret.yaml
+kubectl apply -f k8s/postgres-service.yaml
+kubectl apply -f k8s/postgres-statefulset.yaml
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/ingress.yaml
+```
 
 3. Añade esta línea a tu archivo hosts local si quieres usar Ingress con host name:
    - `127.0.0.1 mini-bank.local`
@@ -78,3 +93,67 @@ Proyecto Spring Boot de ejemplo para un backend bancario pequeño.
 - La app usa PostgreSQL en Docker Compose y Kubernetes.
 - En Kubernetes la app se conecta a PostgreSQL mediante `SPRING_DATASOURCE_URL`.
 - El modo de `docker run` directo ya no está documentado aquí; para uso local rápido, usa `docker compose up --build`.
+
+## Mantener datos al borrar y volver a aplicar
+Si necesitas borrar recursos y volver a levantar todo sin perder la base de datos, sigue este proceso.
+
+Flujo seguro (no borrar datos físicos):
+
+1. Borra recursos de la app y Postgres, pero NO borres los PVC ni el PV:
+
+```bash
+kubectl delete -f k8s/ingress.yaml
+kubectl delete -f k8s/deployment.yaml
+kubectl delete -f k8s/service.yaml
+kubectl delete -f k8s/configmap.yaml
+kubectl delete -f k8s/secret.yaml
+kubectl delete -f k8s/postgres-statefulset.yaml
+kubectl delete -f k8s/postgres-service.yaml
+kubectl delete -f k8s/postgres-init-configmap.yaml
+# NO ejecutar: kubectl delete pvc ... ni kubectl delete pv ...
+```
+
+2. Verifica que los volúmenes sigan existiendo y están `Bound`:
+
+```bash
+kubectl get pvc
+kubectl get pv
+```
+
+3. Vuelve a crear (apply) en el orden recomendado (se asegura que el PV exista antes del StatefulSet):
+
+```bash
+kubectl apply -f k8s/pv-postgres.yaml
+kubectl apply -f k8s/postgres-init-configmap.yaml
+kubectl apply -f k8s/secret.yaml
+kubectl apply -f k8s/postgres-service.yaml
+kubectl apply -f k8s/postgres-statefulset.yaml
+# luego los manifiestos de la app
+kubectl apply -f k8s/configmap.yaml
+kubectl apply -f k8s/service.yaml
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/ingress.yaml
+```
+
+Recuperación si borraste el PVC por error:
+
+1. Comprueba el estado del PV:
+
+```bash
+kubectl get pv pv-mini-bank-postgres -o yaml
+```
+
+2. Si el PV está en estado `Released` y el `hostPath` aún contiene los datos, elimina la referencia de `claimRef` y vuelve a enlazar creando el PVC que el StatefulSet espera (o aplica el StatefulSet que crea el PVC con el mismo nombre):
+
+```bash
+# quitar claimRef del PV
+kubectl patch pv pv-mini-bank-postgres -p '{"spec":{"claimRef": null}}'
+# luego aplica el StatefulSet (o crea un PVC con el nombre esperado)
+kubectl apply -f k8s/postgres-statefulset.yaml
+```
+
+Puntos clave:
+- `pv-postgres.yaml` usa `persistentVolumeReclaimPolicy: Retain`. Kubernetes NO borra los archivos físicos automáticamente; la carpeta `hostPath` debe borrarse manualmente si quieres limpiar todo.
+- El `init.sql` solo se ejecuta cuando PostgreSQL inicializa un `PGDATA` vacío; si el PVC ya contiene datos el script no sobrescribirá la base.
+- Si cambias de cluster o de nodo, los datos en `hostPath` local NO se moverán automáticamente.
+
